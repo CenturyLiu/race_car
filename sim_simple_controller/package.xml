@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package>
+  <name>sim_simple_controller</name>
+  <version>1.0.0</version>
+  <description>Package to control an ackermann racecar in simulation. Based on work of Robotnik.</description>
+
+  <license>BSD</license>
+  <maintainer email="shijiliu@umich.edu">Liu Shiji</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>ackermann_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>diagnostic_msgs</build_depend>
+  <build_depend>diagnostic_updater</build_depend>
+
+  <run_depend>ackermann_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
+
+  <export>
+  </export>
+
+</package>
