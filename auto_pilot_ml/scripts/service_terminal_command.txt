@@ -1,0 +1,2 @@
+rosservice call /teleop_record_service "choice: 0
+line_vel: 1.0"
