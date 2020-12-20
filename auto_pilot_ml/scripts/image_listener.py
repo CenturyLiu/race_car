@@ -15,8 +15,8 @@ from cv_bridge import CvBridge, CvBridgeError
 class ImageListener(object):
     def __init__(self):
         self.bridge_object = CvBridge()
-        self.latest_image = self.bridge_object.imgmsg_to_cv2(rospy.wait_for_message('/mynteye/left/image_raw',Image),desired_encoding="bgr8")
-        self.image_sub = rospy.Subscriber('/mynteye/left/image_raw',Image,self.camera_callback)
+        self.latest_image = self.bridge_object.imgmsg_to_cv2(rospy.wait_for_message('/mynteye/image_raw',Image),desired_encoding="bgr8")
+        self.image_sub = rospy.Subscriber('/mynteye/image_raw',Image,self.camera_callback)
 
     def get_image(self):
         return self.latest_image
