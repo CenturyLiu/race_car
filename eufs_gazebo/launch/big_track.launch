@@ -39,7 +39,7 @@
     name="urdf_spawner" output="screen" pkg="gazebo_ros" respawn="false" type="spawn_model"/>
   
   <!-- start robot_control node -->
-  <include file="$(find robot_control)/launch/robot_control.launch"/>
+  <include file="$(find sim_simple_controller)/launch/robot_control.launch"/>
 
   <!-- Python script to republish ground truth -->
   <node 
@@ -49,4 +49,7 @@
     output="screen"
   />
   
+  <!-- Rviz Configuration -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find eufs_gazebo)/launch/race_car_rviz.rviz"/>
+
 </launch>
