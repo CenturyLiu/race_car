@@ -28,4 +28,8 @@ class ImageListener(object):
             print(e)
 
 
-
+if __name__ == "__main__":
+    rospy.init_node('image_listener', anonymous=True)
+    image_listener = ImageListener()
+    latest_img = image_listener.get_image()
+    cv2.imwrite("test_img.jpg", latest_img)
