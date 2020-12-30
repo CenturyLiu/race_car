@@ -14,9 +14,7 @@ from generate_path2 import link_path_pt
 import socket
 import numpy as np
 from sklearn.neighbors import KDTree
-#import matplotlib
-#matplotlib.use('TkAgg')
-#from matplotlib import pyplot as plt
+import cv2
 
 
 class NaiveControlServer(object):
@@ -48,7 +46,7 @@ class NaiveControlServer(object):
         self.neighbor_distance = 1.0
         
         # max tolerance between 2 continuous angles
-        self.max_steer_change = 0.3
+        self.max_steer_change = 0.45#0.3
         
         self.left_angle = 0.35
         self.right_angle = -0.35#-0.35
@@ -69,9 +67,11 @@ class NaiveControlServer(object):
         
         self.no_cone_count = 0
         
+        self.iteration_count = 0
+        
         # draw the path
         self.debug = debug
-        
+            
         
         # create the server
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -87,7 +87,7 @@ class NaiveControlServer(object):
         # get the image from socket client (ros node, python 2.7)
         # send control command to socket client
         # return whether this node should be shut down
-        
+        self.iteration_count += 1
         # get image
         conn, addr = self.s.accept()
         data = b''
@@ -121,14 +121,40 @@ class NaiveControlServer(object):
             # change coordinate into car frame
             red_pts_car = []
             blue_pts_car = []
+            
+            red_x = []
+            red_y = []
+            blue_x = []
+            blue_y = []
+            
             for red_pt in red_pts:
                 central_pt = self.pixel_2_car.transform(red_pt)
                 if central_pt[0]**2 + central_pt[1]**2 < self.distance_2: # cone close enough to be considered
                     red_pts_car.append(np.array(central_pt))
+                    red_x.append(central_pt[0])
+                    red_y.append(central_pt[1])
             for blue_pt in blue_pts:
                 central_pt = self.pixel_2_car.transform(blue_pt)
                 if central_pt[0]**2 + central_pt[1]**2 < self.distance_2: # cone close enough to be considered
                     blue_pts_car.append(np.array(central_pt))
+                    blue_x.append(central_pt[0])
+                    blue_y.append(central_pt[1])
+            
+            if self.debug:
+                print("---")
+                print("iteration %d", self.iteration_count)
+                '''
+                if len(red_x) != 0:
+                    mr, br = np.polyfit(red_x, red_y, 1)
+                    print("red:")
+                    print("slope = %f, intercept = %f"%(mr,br))
+                if len(blue_x) != 0:
+                    mb, bb = np.polyfit(blue_x, blue_y, 1)
+                    print("blue:")
+                    print("slope = %f, intercept = %f"%(mb,bb))
+                '''
+                print("red: %d"%(len(red_pts_car)))
+                print("blue: %d"%(len(blue_pts_car)))
             
             '''
             # if too few cones are detected, enlarge the distance and loop again
@@ -196,17 +222,26 @@ class NaiveControlServer(object):
                     temp.append(total_path[-1])
                     total_path = temp
                 
+                
+                
                 # draw the path
-                '''
+                
                 if self.debug:
-                    x = []
-                    y = []
-                    for pt in total_path:
-                        x.append(pt[0])
-                        y.append(pt[1])
-                    plt.plot(x,y,"-og")
-                    plt.pause(0.1)
-                '''
+                    img_size = 32
+                    img = np.ones((img_size,img_size,3), np.uint8) * 255
+                    for ii in range(0,len(total_path) - 1):
+                        img = cv2.line(img,(int(img_size / 2) - int(total_path[ii][1]),int(img_size) - int(total_path[ii][0])),(int(img_size / 2) - int(total_path[ii+1][1]),int(img_size) - int(total_path[ii+1][0])),(0,255,0), thickness = 2)
+                    
+                    for pt in red_pts_car:
+                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (0,0,255))
+                    
+                    for pt in blue_pts_car:
+                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (255,0,0))
+                    
+                    cv2.imshow('path',img)
+                    cv2.waitKey(1)
+                        
+                
                 ret_val = self.purepursuit.get_speed_steer(total_path, current_xy = [0.0,0.0], current_yaw = 0.0)
                 speed = ret_val[0]
                 steer = ret_val[1]
@@ -246,6 +281,9 @@ class NaiveControlServer(object):
                 steer = self.right_angle
                 speed = self.speed / 2 # slow down
                 self.no_cone_count = 0
+                self.last_speed = speed
+                self.last_steer = steer
+                
             elif len_blue >= 3 and len_red == 1:
                 print("Turn left, slow down")
                 # turn left
@@ -257,12 +295,16 @@ class NaiveControlServer(object):
                 steer = self.right_angle_large
                 speed = self.speed / 3
                 self.no_cone_count = 0
+                self.last_speed = speed
+                self.last_steer = steer
             elif len_red == 0 and len_blue != 0:
                 print("No red, turn left immediately")
                 # turn left
                 steer = self.left_angle_large
                 speed = self.speed / 3 # slow down
                 self.no_cone_count = 0
+                self.last_speed = speed
+                self.last_steer = steer
             else:
                 if self.no_cone_count >= self.no_feasible_limit:
                     # too few cones in range, stop
@@ -286,7 +328,9 @@ class NaiveControlServer(object):
         return stop
 
 if __name__ == "__main__":
+    # for training_track.launch
     control_server = NaiveControlServer(speed = 3.5, Lfc = 4.0, distance = 16.0, debug = True)
+    #control_server = NaiveControlServer(speed = 3.5, Lfc = 6.0, distance = 16.0, debug = True)
     while True:
         stop = control_server.get_control_from_img()
         if stop:
