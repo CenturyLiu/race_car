@@ -59,6 +59,7 @@ class NaiveControlServer(object):
         
         self.no_feasible_count = 0
         self.no_feasible_limit = 5 # allow in maximum 5 continuous times the controller cannot find target
+        self.misclassify_limit = 2
         #self.last_not_feasible = False 
         self.last_steer = 0.0
         self.last_speed = self.speed
@@ -82,6 +83,42 @@ class NaiveControlServer(object):
         self.s.listen(1)
         
         print("Control server started")
+        
+    
+    def generate_central_path(self, red_pts_car, blue_pts_car):
+        len_red = len(red_pts_car)
+        len_blue = len(blue_pts_car)
+        # generate path by using avg
+        if len_red >= len_blue:
+            choice_tree = red_pts_car
+            choice_not_tree = blue_pts_car
+        else:
+            choice_tree = blue_pts_car
+            choice_not_tree = red_pts_car
+                
+        tree = KDTree(choice_tree)
+    
+        central_path_pts = []
+        for pt in choice_not_tree:
+            _, ind = tree.query(pt.reshape(1,-1),2) # get the nearest 2 other color cone
+            neighbor1 = choice_tree[ind[0][0]]
+            central_path_pts.append((neighbor1 + pt) / 2)
+            neighbor2 = choice_tree[ind[0][1]]
+            #if np.linalg.norm(neighbor1 - neighbor2) < self.neighbor_distance: # nearest neighbors too close
+            #    if len(choice_tree) >= 3:
+            #        _, ind = tree.query(pt.reshape(1,-1),3)
+            #        neighbor2 = choice_tree[ind[0][2]]
+            central_path_pts.append((neighbor2 + pt) / 2)
+        # sort the central path pts
+        central_pt_2d = np.array(central_path_pts)
+        total_path = link_path_pt(central_pt_2d)
+                
+        # add [0,0] to total_path
+        if np.linalg.norm(np.array([0,0]) - total_path[0]) > np.linalg.norm(np.array([0,0]) - total_path[-1]):
+            # reverse the order
+            total_path.reverse()
+        return total_path
+    
         
     def get_control_from_img(self):
         # get the image from socket client (ros node, python 2.7)
@@ -147,7 +184,14 @@ class NaiveControlServer(object):
                 if len(red_x) != 0:
                     mr, br = np.polyfit(red_x, red_y, 1)
                     print("red:")
-                    print("slope = %f, intercept = %f"%(mr,br))
+                                        for pt in red_pts_car:
+                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (0,0,255))
+                    
+                    for pt in blue_pts_car:
+                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (255,0,0))
+                    
+                    cv2.imshow('path',img)
+                    cv2.waitKey(1)print("slope = %f, intercept = %f"%(mr,br))
                 if len(blue_x) != 0:
                     mb, bb = np.polyfit(blue_x, blue_y, 1)
                     print("blue:")
@@ -182,36 +226,11 @@ class NaiveControlServer(object):
             len_red = len(red_pts_car)
             len_blue = len(blue_pts_car)
             
+            # try to form central path
+            total_path = []
             if len_red >= 2 and len_blue >= 2:
-                # generate path by using avg
-                if len_red >= len_blue:
-                    choice_tree = red_pts_car
-                    choice_not_tree = blue_pts_car
-                else:
-                    choice_tree = blue_pts_car
-                    choice_not_tree = red_pts_car
-                
-                tree = KDTree(choice_tree)
-    
-                central_path_pts = []
-                for pt in choice_not_tree:
-                    _, ind = tree.query(pt.reshape(1,-1),2) # get the nearest 2 other color cone
-                    neighbor1 = choice_tree[ind[0][0]]
-                    central_path_pts.append((neighbor1 + pt) / 2)
-                    neighbor2 = choice_tree[ind[0][1]]
-                    #if np.linalg.norm(neighbor1 - neighbor2) < self.neighbor_distance: # nearest neighbors too close
-                    #    if len(choice_tree) >= 3:
-                    #        _, ind = tree.query(pt.reshape(1,-1),3)
-                    #        neighbor2 = choice_tree[ind[0][2]]
-                    central_path_pts.append((neighbor2 + pt) / 2)
-                # sort the central path pts
-                central_pt_2d = np.array(central_path_pts)
-                total_path = link_path_pt(central_pt_2d)
-                
-                # add [0,0] to total_path
-                if np.linalg.norm(np.array([0,0]) - total_path[0]) > np.linalg.norm(np.array([0,0]) - total_path[-1]):
-                    # reverse the order
-                    total_path.reverse()
+
+                total_path = self.generate_central_path(red_pts_car, blue_pts_car)
                 
                 total_path.insert(0,np.array([0,0]))
                 if len(total_path) <= 3:
@@ -222,25 +241,84 @@ class NaiveControlServer(object):
                     temp.append(total_path[-1])
                     total_path = temp
                 
-                
+                else:
+                    # check whether the central path is "classifying" the red and blue cones
+                    path_tree = KDTree(total_path)
+                    misclassify = 0
+                    for pt in red_pts_car:
+                        _, ind = path_tree.query(pt.reshape(1,-1),1)
+                        index = ind[0][0]
+                        if index != len(total_path) - 1:
+                            vec_path = np.array([total_path[index + 1][0] - total_path[index][0],total_path[index + 1][1] - total_path[index][1], 0])
+                        else:
+                            vec_path = np.array([total_path[index][0] - total_path[index - 1][0],total_path[index][1] - total_path[index - 1][1], 0])
+                        
+                        vec_2 = np.array([total_path[index][0] - pt[0], total_path[index][1] - pt[1],0])
+                        cross = np.cross(vec_2, vec_path)
+                        if cross[2] < 0:
+                            misclassify += 1
+                    
+                    for pt in blue_pts_car:
+                        _, ind = path_tree.query(pt.reshape(1,-1),1)
+                        index = ind[0][0]
+                        if index != len(total_path) - 1:
+                            vec_path = np.array([total_path[index + 1][0] - total_path[index][0],total_path[index + 1][1] - total_path[index][1], 0])
+                        else:
+                            vec_path = np.array([total_path[index][0] - total_path[index - 1][0],total_path[index][1] - total_path[index - 1][1], 0])
+                        
+                        vec_2 = np.array([total_path[index][0] - pt[0], total_path[index][1] - pt[1],0])
+                        cross = np.cross(vec_2, vec_path)
+                        if cross[2] > 0:
+                            misclassify += 1
+                    
+                    if self.debug:
+                        print("misclassification : %d / %d"%(misclassify, len(red_pts_car) + len(blue_pts_car)))
+                    
+                    if misclassify >= self.misclassify_limit :
+                        # too much misclassification, use smaller radius, re-construct central path
+                        red_pts_car_temp = []
+                        blue_pts_car_temp = []
+                        distance_2 = (self.distance - 5) ** 2
+                        for pt in red_pts_car:
+                            if pt[0] ** 2 + pt[1] ** 2 <= distance_2:
+                                red_pts_car_temp.append(pt)
+                        
+                        for pt in blue_pts_car:
+                            if pt[0] ** 2 + pt[1] ** 2 <= distance_2:
+                                blue_pts_car_temp.append(pt)
+                        
+                        red_pts_car = red_pts_car_temp
+                        blue_pts_car = blue_pts_car_temp
+                        len_red = len(red_pts_car)
+                        len_blue = len(blue_pts_car)
+                        if len_red >= 2 and len_blue >= 2:
+                            total_path = self.generate_central_path(red_pts_car, blue_pts_car)
+                            total_path.insert(0,np.array([0,0]))
+                            if len(total_path) <= 3:
+                                temp = []
+                                for ii in range(1,len(total_path)):
+                                    temp.append(total_path[ii-1])
+                                    temp.append((total_path[ii-1] + total_path[ii]) / 2)
+                                temp.append(total_path[-1])
+                                total_path = temp
+                        
+            
+            # draw cone in range and central path
+            if self.debug:
+                img_size = 32
+                img = np.ones((img_size,img_size,3), np.uint8) * 255
+            
+            
+            # start control
+            if len_red >= 2 and len_blue >= 2:
                 
                 # draw the path
                 
                 if self.debug:
-                    img_size = 32
-                    img = np.ones((img_size,img_size,3), np.uint8) * 255
+                    
                     for ii in range(0,len(total_path) - 1):
                         img = cv2.line(img,(int(img_size / 2) - int(total_path[ii][1]),int(img_size) - int(total_path[ii][0])),(int(img_size / 2) - int(total_path[ii+1][1]),int(img_size) - int(total_path[ii+1][0])),(0,255,0), thickness = 2)
                     
-                    for pt in red_pts_car:
-                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (0,0,255))
-                    
-                    for pt in blue_pts_car:
-                        img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (255,0,0))
-                    
-                    cv2.imshow('path',img)
-                    cv2.waitKey(1)
-                        
                 
                 ret_val = self.purepursuit.get_speed_steer(total_path, current_xy = [0.0,0.0], current_yaw = 0.0)
                 speed = ret_val[0]
@@ -271,10 +349,6 @@ class NaiveControlServer(object):
                     self.last_steer = steer
                     self.no_cone_count = 0
                 
-            #elif len_red >= 3 and len_blue == 2:
-            #    tree = KDTree()
-            #elif len_blue >= 3 and len_red == 2:
-            #    pass
             elif len_red >= 3 and len_blue == 1:
                 print("Turn right, slow down")
                 # turn right
@@ -320,7 +394,15 @@ class NaiveControlServer(object):
                     print("Too few input pts!")
             
             
-            
+            if self.debug:
+                for pt in red_pts_car:
+                    img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (0,0,255))
+                    
+                for pt in blue_pts_car:
+                    img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (255,0,0))
+                    
+                cv2.imshow('path',img)
+                cv2.waitKey(1)
                 
             conn.sendall(np.array([speed, steer]).tobytes()) # fake control command
             conn.close()
@@ -329,8 +411,8 @@ class NaiveControlServer(object):
 
 if __name__ == "__main__":
     # for training_track.launch
-    control_server = NaiveControlServer(speed = 3.5, Lfc = 4.0, distance = 16.0, debug = True)
-    #control_server = NaiveControlServer(speed = 3.5, Lfc = 6.0, distance = 16.0, debug = True)
+    #control_server = NaiveControlServer(speed = 3.5, Lfc = 4.0, distance = 16.0, debug = True)
+    control_server = NaiveControlServer(speed = 4.0, Lfc = 4.0, distance = 16.0, debug = True)
     while True:
         stop = control_server.get_control_from_img()
         if stop:
