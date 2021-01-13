@@ -1,0 +1,21 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='cone_red'>
+    <link name='link'>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://cone_red/meshes/cone_red.dae</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://cone_red/meshes/cone_red.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
