@@ -39,4 +39,12 @@ This project provides a simple solution for a racecar navigation. The simulation
 
 - Enable gazebo display
 
-  Put the 3 packages inside 
+  Put the 3 model packages inside [models](https://github.com/CenturyLiu/race_car/tree/main/models) in this repository into `.gazebo/models`. 
+  
+- Enable python3 usage
+
+  This project is created for ROS-Kinetic / ROS-Melodic, where python 2.7 is used. However, part of this project's codes are only available for python 3. Several steps for using python 3 along with python 2.7 is listed:
+  
+  + eliminate any `source` commands in your ~/.bashrc
+    `source` commands, for example: `source /opt/ros/melodic/setup.bash` will include python 2.7 directory, and will conflict with python 3. Please delete all `source` commands in "~/.bashrc", and put them in a new file called `~/.bashrc_ros1`. 
+  
