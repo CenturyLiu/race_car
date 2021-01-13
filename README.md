@@ -14,6 +14,29 @@ This project provides a simple solution for a racecar navigation. The simulation
 
 ## Install this project
 
-Create a ROS workspace if you don't have one (here, the workspace is called race_car_ws): `mkdir -p ~/race_car_ws/src`.  Copy the contents in this repository into the `src` file you just created.
+- Download and Compile
 
-- 
+  Create a ROS workspace if you don't have one (here, the workspace is called race_car_ws): `mkdir -p ~/race_car_ws/src`.  Copy the contents in this repository into the `src` file you just created.
+  
+  Navigate to your workspace and build the simulation:
+  
+      cd ~/race_car_ws/src
+      catkin_make
+  
+  Navigate inside your workspace and give permission to several `.py` or `.sh` files:
+  
+      cd ~/race_car_ws/src/auto_pilot_ml/scripts
+      chmod +x naive_navigation.py
+      
+      cd ~/race_car_ws/src/eufs_gazebo/nodes
+      chmod +x ground_truth_republisher.py
+      
+      cd ~/race_car/src/sim_simple_controller/nodes
+      chmod +x twist_to_ackermannDrive.py
+      
+      cd ~/race_car_ws/src/scripts
+      chmod +x install_python3.sh
+
+- Enable gazebo display
+
+  Put the 3 packages inside 
