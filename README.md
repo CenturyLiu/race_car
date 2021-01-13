@@ -4,6 +4,9 @@ This project provides a simple solution for a racecar navigation. The simulation
 
 ## Install Prerequisites
 
+
+  This project is created for ROS-Kinetic / ROS-Melodic, where python 2.7 is used. However, part of this project's codes are only available for python 3. Several steps for using python 3 along with python 2.7 is listed:
+
 - Ubuntu 16.04 + ROS Kinetic
 
 `sudo apt-get install ros-kinetic-ackermann-msgs ros-kinetic-twist-mux ros-kinetic-joy ros-kinetic-controller-manager ros-kinetic-robotnik-msgs ros-kinetic-velodyne-simulator ros-kinetic-effort-controllers ros-kinetic-velocity-controllers ros-kinetic-joint-state-controller ros-kinetic-gazebo-ros-control ros-kinetic-robotnik-msgs`
@@ -75,7 +78,7 @@ This project provides a simple solution for a racecar navigation. The simulation
     
  - Download weights for cone-detection by yolov3
  
-   Cone detection using yolov3 is an important part for the racecar to navigate in the simulation environment. The model weights for cone-detection in simulation can be found at [link_google_drive](https://drive.google.com/file/d/1v10CjppNhtrEHk5q-NI00J-4zd32zwtI/view?usp=sharing). Please download the weights from any of the links and put it into 
+   Cone detection using yolov3 is an important part for the racecar to navigate in the simulation environment. The model weights for cone-detection in simulation can be found at [link_google_drive](https://drive.google.com/file/d/1v10CjppNhtrEHk5q-NI00J-4zd32zwtI/view?usp=sharing) or [微云](https://share.weiyun.com/AdCRTVkk) Please download the weights from any of the links and put it into 
    
    `~/race_car_ws/src/scripts/detect`
    
