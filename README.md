@@ -2,6 +2,16 @@
 
 This project provides a simple solution for a racecar navigation. The simulation environment is adapted from [eufs_sim](https://github.com/eufsa/eufs_sim)
 
+## Demo
+
+![race_car_naive_control_demo](https://github.com/CenturyLiu/race_car/blob/main/demo_img/race_car_naive_control_demo.gif)
+
+> Demo of racecar navigating in simulation environment by only using image data
+
+![small_cricle_demo](https://github.com/CenturyLiu/race_car/blob/main/demo_img/small_cricle_demo.gif)
+
+> Demo of racecar passing a small U-circle
+
 ## Install Prerequisites
 
 
