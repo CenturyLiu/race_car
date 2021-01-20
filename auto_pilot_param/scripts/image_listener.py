@@ -4,9 +4,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import cv2
-import tensorflow as tf
 import numpy as np
-import h5py
 import rospy
 
 from sensor_msgs.msg import Image
