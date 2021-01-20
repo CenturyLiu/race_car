@@ -23,3 +23,5 @@ pip_install pyyaml
 pip_install tqdm
 pip_install matplotlib
 pip_install sklearn
+pip_install configobj
+
