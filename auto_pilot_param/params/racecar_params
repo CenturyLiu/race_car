@@ -1,0 +1,58 @@
+# This file contains all parameters used for racecar control in simulation
+# To adapt the auto_pilot_param package for your own racecar control,
+# simply change the parameters and run the code
+
+# Parameters for ROS topics
+
+    # Image topic
+    image_topic = /mynteye/image_raw
+
+    # Vehicle control topic
+    vehicle_control_topic = /cmd_vel
+
+# Transformation parameters
+    # camera height with respet to ground, unit: m
+    camera_height = 0.77
+
+    # x distance between camera link and the center of rear wheels
+    rear_x_offset = 0.875
+    # y distance between camera link and the center of rear wheels
+    rear_y_offset = 0.06
+
+    # distance between front and rear tires
+    L = 1.6
+
+# Parameters for Cone Detection from img using yolov3
+    # Camera inner parameters
+    # Note: distortion parameters are not included, 
+    # Please make sure the input image for cone detection has been rectified
+    fx = 448.13386274345095
+    fy = 448.13386274345095
+    cx = 640.5
+    cy = 360.5
+
+    # Cone height, unit: meter. 
+    cone_height = 0.3029
+
+    # Image size parameters
+        # Image x, see https://github.com/ultralytics/yolov3/wiki/Train-Custom-Data#2-create-labels for image coordinate definition
+        original_col = 1280
+
+        # Image y
+        original_row = 720
+
+        # Size of resized image for detection in yolo (the --image parameter used in training, see https://github.com/ultralytics/yolov3/wiki/Train-Custom-Data#5-train)
+        image_size = 640
+
+    # Yolo weight file name (name only, don't include directory info)
+    weight_file = best.pt
+
+# parameter for pure pursuit control
+    # coefficient for look ahead
+    k = 0.1
+
+
+
+        
+        
+
