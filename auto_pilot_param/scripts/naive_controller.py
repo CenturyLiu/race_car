@@ -144,7 +144,7 @@ class NaiveController(object):
             choice_tree = blue_pts_car
             choice_not_tree = red_pts_car
                 
-        tree = KDTree(choice_tree)
+        tree = KDTree(np.array(choice_tree))
     
         central_path_pts = []
         for pt in choice_not_tree:
@@ -223,7 +223,7 @@ class NaiveController(object):
                 
             else:
                 # check whether the central path is "classifying" the red and blue cones
-                path_tree = KDTree(total_path)
+                path_tree = KDTree(np.array(total_path))
                 misclassify = 0
                 for pt in red_pts_car:
                     _, ind = path_tree.query(pt.reshape(1,-1),1)
