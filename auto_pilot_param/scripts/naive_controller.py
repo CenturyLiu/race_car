@@ -17,6 +17,8 @@ from pure_pursuit_wrapper import PurePursuit
 import cv2
 import rospkg
 from configobj import ConfigObj
+from path_display import Display
+import copy
 
 class NaiveController(object):
     def __init__(self, host = '', port = 50008, distance = 16.0, speed = 3.5, Lfc = 4.0, debug = False):
@@ -75,7 +77,7 @@ class NaiveController(object):
         
         # draw the path
         self.debug = debug
-        
+        self.display = Display()
         
         self.host = host
         self.port = port
@@ -144,7 +146,7 @@ class NaiveController(object):
             choice_tree = blue_pts_car
             choice_not_tree = red_pts_car
                 
-        tree = KDTree(np.array(choice_tree))
+        tree = KDTree(choice_tree)
     
         central_path_pts = []
         for pt in choice_not_tree:
@@ -196,7 +198,8 @@ class NaiveController(object):
             print("iteration %d" %(self.count))
             print("red: %d"%(len(red_pts_car)))
             print("blue: %d"%(len(blue_pts_car)))
-        
+            red_pts_car_plot = copy.deepcopy(red_pts_car)
+            blue_pts_car_plot = copy.deepcopy(blue_pts_car)
         
         # generate path and get control commands
             
@@ -223,7 +226,7 @@ class NaiveController(object):
                 
             else:
                 # check whether the central path is "classifying" the red and blue cones
-                path_tree = KDTree(np.array(total_path))
+                path_tree = KDTree(total_path)
                 misclassify = 0
                 for pt in red_pts_car:
                     _, ind = path_tree.query(pt.reshape(1,-1),1)
@@ -284,22 +287,23 @@ class NaiveController(object):
                         
             
         # draw cone in range and central path
+        '''
         if self.debug:
             img_size = 32
             img = np.ones((img_size,img_size,3), np.uint8) * 255
-            
+        '''    
             
         # start control
         if len_red >= 2 and len_blue >= 2:
                 
             # draw the path
-                
+            '''
             if self.debug:
                     
                 for ii in range(0,len(total_path) - 1):
                     img = cv2.line(img,(int(img_size / 2) - int(total_path[ii][1]),int(img_size) - int(total_path[ii][0])),(int(img_size / 2) - int(total_path[ii+1][1]),int(img_size) - int(total_path[ii+1][0])),(0,255,0), thickness = 2)
                     
-                
+            '''    
             ret_val = self.purepursuit.get_speed_steer(total_path, current_xy = [0.0,0.0], current_yaw = 0.0)
             speed = ret_val[0]
             steer = ret_val[1]
@@ -375,6 +379,7 @@ class NaiveController(object):
             
             
         if self.debug:
+            '''
             for pt in red_pts_car:
                 img = cv2.circle(img, (int(img_size / 2) - int(pt[1]), int(img_size) - int(pt[0])), 2, (0,0,255))
                     
@@ -383,6 +388,10 @@ class NaiveController(object):
                     
             cv2.imshow('path',img)
             cv2.waitKey(1)
+            '''
+            # draw all detected cones and the central path
+            self.display.path_display(np.array(red_pts_car_plot),np.array(blue_pts_car_plot),np.array(total_path))
+            
             print("speed: %f, steer: %f"%(speed,steer))
         
         self.twist.linear.x = speed
@@ -409,7 +418,7 @@ class NaiveController(object):
 def main():
     rospy.init_node('Naive_control_client')
     #fake_navigation = Fake_navigation(mode="discrete", record_control = True)
-    naive_navigation = NaiveController(speed = 5.0, Lfc = 4.0, distance = 16.0, debug = True)
+    naive_navigation = NaiveController(speed = 4.0, Lfc = 4.0, distance = 16.0, debug = True)
     while not rospy.is_shutdown():
         stop = naive_navigation.get_control_from_img()
         if stop:
