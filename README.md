@@ -149,4 +149,8 @@ This project provides a simple solution for a racecar navigation. The simulation
     Once you run this command, the racecar inside simulation should start running.
    
    
+## Project Introduction
+   
+   To learn more about this project, please see [racecar_project_introduction.pdf](https://github.com/CenturyLiu/race_car/blob/main/racecar_project_introduction.pdf)
+   
   
