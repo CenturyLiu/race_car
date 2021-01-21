@@ -35,7 +35,7 @@ class ConeDetectionServer(object):
         
         
         # cone detection class
-        self.cone_detection = DetectionClass(weight_file=self.config['weight_file'])
+        self.cone_detection = DetectionClass(weight_file=self.config['weight_file'],img_size=self.image_size)
         
         # pixel coordinate transform class
         self.pixel_2_car = Pixel2Car()
