@@ -38,8 +38,8 @@ This project provides a simple solution for a racecar navigation. The simulation
   
   Navigate inside your workspace and give permission to several `.py` or `.sh` files:
   
-      cd ~/race_car_ws/src/auto_pilot_ml/scripts
-      chmod +x naive_navigation.py
+      cd ~/race_car_ws/src/auto_pilot_param/scripts
+      chmod +x naive_controller.py
       
       cd ~/race_car_ws/src/eufs_gazebo/nodes
       chmod +x ground_truth_republisher.py
@@ -48,6 +48,7 @@ This project provides a simple solution for a racecar navigation. The simulation
       chmod +x twist_to_ackermannDrive.py
       
       cd ~/race_car_ws/src/scripts
+      chmod +x install_python2.sh
       chmod +x install_python3.sh
 
 - Enable gazebo display
@@ -86,6 +87,18 @@ This project provides a simple solution for a racecar navigation. The simulation
     
     `./install_python3.sh`
     
+  + Install python 2 packages
+  
+      Open a new terminal, activate python 2 environment
+      
+      Navigate to /scripts inside your workspace
+    
+       `cd ~/race_car_ws/src/scripts`
+    
+       Install those packages by 
+    
+       `./install_python2.sh`
+    
  - Download weights for cone-detection by yolov3
  
    Cone detection using yolov3 is an important part for the racecar to navigate in the simulation environment. The model weights for cone-detection in simulation can be found at [link_google_drive](https://drive.google.com/file/d/1v10CjppNhtrEHk5q-NI00J-4zd32zwtI/view?usp=sharing) or [微云](https://share.weiyun.com/AdCRTVkk) Please download the weights from any of the links and put it into 
@@ -119,7 +132,7 @@ This project provides a simple solution for a racecar navigation. The simulation
     
     start the server for naive racecar control
     
-    `python naive_controller.py`
+    `python cone_detection_server_param.py`
     
     wait until you see "Control server started"
     
@@ -131,7 +144,7 @@ This project provides a simple solution for a racecar navigation. The simulation
     
     In the terminal, run the ros node for naive racecar control by
     
-    `rosrun auto_pilot_ml naive_navigation.py`
+    `rosrun auto_pilot_param naive_controller.py`
     
     Once you run this command, the racecar inside simulation should start running.
    
