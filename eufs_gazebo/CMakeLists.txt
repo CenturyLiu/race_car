@@ -4,7 +4,8 @@ project(eufs_gazebo)
 find_package(catkin REQUIRED COMPONENTS
   gazebo_ros
   eufs_description
-  robot_control
+  #robot_control
+  sim_simple_controller
   roscpp
   std_msgs
   std_srvs
